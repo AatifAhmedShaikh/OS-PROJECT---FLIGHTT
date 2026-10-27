@@ -146,6 +146,7 @@ static void help(void) {
 }
 
 int main(void) {
+    WIN_INIT();
     const char *path = getenv("AEROCORE_DB");
     if (!path) path = "aerocore.journal";
     int ok, bad;

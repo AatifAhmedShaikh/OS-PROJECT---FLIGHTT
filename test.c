@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <sys/wait.h>
+#endif
 #include <unistd.h>
 
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "FAIL line %d: %s\n", __LINE__, #x); exit(1); } } while (0)
@@ -111,6 +113,7 @@ static void test_airline(void) {
     db_close();
 
     /* real crash: the child's 2nd write is torn mid-line and the process dies */
+#ifndef _WIN32                                           /* needs fork(): skipped on Windows */
     fflush(stdout);
     pid_t pid = fork();
     if (!pid) {
@@ -125,11 +128,13 @@ static void test_airline(void) {
     CHECK(db_open(path, &ok, &bad) && bad == 1);
     CHECK(book_check(cy, "AC202", "2A") != NULL);                         /* committed before the crash */
     CHECK(book_check(cy, "AC303", "2B") == NULL);                         /* torn one never happened */
+#endif
     db_close();
     unlink(path);
 }
 
 int main(void) {
+    WIN_INIT();
     test_baselines();
     test_mlfq();
     test_airline();

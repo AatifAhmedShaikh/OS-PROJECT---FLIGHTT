@@ -1,6 +1,29 @@
 #ifndef AEROCORE_H
 #define AEROCORE_H
 
+#ifdef _WIN32                                       /* Windows (MinGW): map the few POSIX calls the code uses */
+#include <fcntl.h>
+#include <io.h>
+#include <process.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+__declspec(dllimport) void __stdcall Sleep(unsigned long ms);
+static inline int win_truncate(const char *p, long n) {
+    int fd = _open(p, _O_RDWR | _O_BINARY), r;
+    if (fd < 0) return -1;
+    r = _chsize(fd, n); _close(fd); return r;
+}
+#define fsync _commit
+#define isatty _isatty
+#define getpid _getpid
+#define usleep(us) Sleep((us) / 1000)
+#define truncate win_truncate
+#define WIN_INIT() (_fmode = _O_BINARY)             /* journal in binary mode: no CRLF translation */
+#else
+#define WIN_INIT() ((void)0)
+#endif
+
 #define MAXREQ 64
 #define MAXSEG 1024
 #define MAXEV  512
